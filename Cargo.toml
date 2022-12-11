@@ -9,7 +9,7 @@ readme = "README.md"
 homepage = "https://github.com/JohnBCoding/yawcli"
 repository = "https://github.com/JohnBCoding/yawcli"
 keywords = ["cli", "weather", "ip"]
-categories = ["command-line-utilities", "weather"]
+categories = ["command-line-utilities"]
 
 [dependencies]
 clap = "2.33"
