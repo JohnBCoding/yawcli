@@ -2,6 +2,14 @@
 name = "yawcli"
 version = "0.1.0"
 edition = "2021"
+authors = ["John Bullard <johnbcooding@gmail.com>"]
+license = "MIT OR Apache-2.0"
+description = "CLI tool that uses your IP address to provide local weather data. Does not work outside the USA."
+readme = "README.md"
+homepage = "https://github.com/JohnBCoding/yawcli"
+repository = "https://github.com/JohnBCoding/yawcli"
+keywords = ["cli", "weather", "ip"]
+categories = ["command-line-utilities", "weather"]
 
 [dependencies]
 clap = "2.33"
