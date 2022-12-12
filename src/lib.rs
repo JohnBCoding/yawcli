@@ -1,3 +1,4 @@
+use chrono::{DateTime, Datelike, Timelike};
 use clap::{App, Arg};
 use reqwest;
 use scraper;
@@ -5,6 +6,9 @@ use serde::Deserialize;
 use std::error::Error;
 
 type WeatherResult<T> = Result<T, Box<dyn Error>>;
+pub struct Config {
+    celsius: bool,
+}
 struct Location {
     latitude: String,
     longitude: String,
@@ -37,6 +41,8 @@ struct ForecastPeriods {
 
 #[derive(Deserialize, Debug)]
 struct ForecastPeriod {
+    #[serde(alias = "startTime")]
+    time: String,
     temperature: f32,
     #[serde(alias = "temperatureUnit")]
     unit: String,
@@ -48,43 +54,16 @@ struct ForecastPeriod {
     short_forecast: String,
 }
 
-pub fn run(celsius: bool) -> WeatherResult<()> {
+pub fn run(config: Config) -> WeatherResult<()> {
     let location = get_data_from_ip()?;
     let hourly_forecast = get_hourly_forecast(&location.latitude, &location.longitude)?;
-    let mut temp = hourly_forecast.forecast.periods[0].temperature;
-    let mut temp_unit = hourly_forecast.forecast.periods[0].unit.to_lowercase();
-
-    // Convert if needed
-    if celsius {
-        temp = (temp - 32.0) * 0.5556;
-        temp_unit = "c".to_string();
-    }
-
-    // Print retrieved info
-    println!(
-        "\n{}, {} | {} ({}, {})",
-        location.city,
-        location.region,
-        location.country,
-        location.latitude.split(".").next().unwrap_or(""),
-        location.longitude.split(".").next().unwrap_or("")
-    );
-
-    println!(
-        "\n{:.0}{}\n{}\n{} {}",
-        temp,
-        temp_unit,
-        hourly_forecast.forecast.periods[0].short_forecast,
-        hourly_forecast.forecast.periods[0].wind_speed,
-        hourly_forecast.forecast.periods[0].wind_direction
-    );
-
+    print_hourly_forecast(location, hourly_forecast, config)?;
     Ok(())
 }
 
-pub fn get_args() -> WeatherResult<bool> {
+pub fn get_args() -> WeatherResult<Config> {
     let matches = App::new("yawcli")
-        .version("0.1.1")
+        .version("0.1.2")
         .author("John Bullard <johnbcooding@gmail.com>")
         .about("Uses your IP to get the local forecast, only works in USA.")
         .arg(
@@ -96,7 +75,9 @@ pub fn get_args() -> WeatherResult<bool> {
             //.conflicts_with("number_nonblank_lines") implemented my own errors to learn how they work
         )
         .get_matches();
-    Ok(matches.is_present("celsius"))
+    Ok(Config {
+        celsius: matches.is_present("celsius"),
+    })
 }
 
 fn get_data_from_ip() -> WeatherResult<Location> {
@@ -165,4 +146,54 @@ fn get_hourly_forecast(latitude: &String, longitude: &String) -> WeatherResult<H
     let hourly_forecast = response.json::<HourlyForecast>()?;
 
     Ok(hourly_forecast)
+}
+
+fn print_location(location: Location) {
+    println!(
+        "\n{}, {} | {} ({}, {})",
+        location.city,
+        location.region,
+        location.country,
+        location.latitude.split(".").next().unwrap_or(""),
+        location.longitude.split(".").next().unwrap_or("")
+    );
+}
+
+fn print_hourly_forecast(
+    location: Location,
+    hourly_forecast: HourlyForecast,
+    config: Config,
+) -> WeatherResult<()> {
+    print_location(location);
+
+    let mut temp = hourly_forecast.forecast.periods[0].temperature;
+    let mut temp_unit = hourly_forecast.forecast.periods[0].unit.to_lowercase();
+
+    // Convert to celsius if needed
+    if config.celsius {
+        temp = (temp - 32.0) * 0.5556;
+        temp_unit = "c".to_string();
+    }
+
+    // Print retrieved info
+    let time = DateTime::parse_from_rfc3339(&hourly_forecast.forecast.periods[0].time)?;
+    let hour = time.hour12();
+    println!(
+        "\nWeather {} {}{}:",
+        time.weekday(),
+        hour.1,
+        if hour.0 { "pm" } else { "am" }
+    );
+    println!("  Temp: {:.0}{}", temp, temp_unit);
+    println!(
+        "  Conditions: {}",
+        hourly_forecast.forecast.periods[0].short_forecast
+    );
+    println!(
+        "  Wind: {} {}",
+        hourly_forecast.forecast.periods[0].wind_speed,
+        hourly_forecast.forecast.periods[0].wind_direction
+    );
+
+    Ok(())
 }

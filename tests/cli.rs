@@ -33,7 +33,7 @@ fn run_empty() -> TestResult<()> {
     Command::cargo_bin(PROGRAM)?
         .assert()
         .success()
-        .stdout(predicates::str::is_match(r"(\D*\d){7,}").unwrap());
+        .stdout(predicates::str::is_match(r"(\D*\d){8,}").unwrap());
     Ok(())
 }
 // ----------------------------
