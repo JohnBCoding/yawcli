@@ -54,7 +54,7 @@ fn run_celsius() -> TestResult<()> {
 fn run_hours() -> TestResult<()> {
     // Checks if 24 hours worth of data is shown in fahrenheit.
     Command::cargo_bin(PROGRAM)?
-        .args(["-hours 24"])
+        .args(["--hours", "24"])
         .assert()
         .success()
         .stdout(predicates::str::contains("Temp").count(24))
@@ -66,7 +66,7 @@ fn run_hours() -> TestResult<()> {
 fn run_hours_celsius() -> TestResult<()> {
     // Checks if 24 hours worth of data is shown in celsius.
     Command::cargo_bin(PROGRAM)?
-        .args(["-c", "-hours 24"])
+        .args(["-c", "--hours", "24"])
         .assert()
         .success()
         .stdout(predicates::str::contains("Temp").count(24))
