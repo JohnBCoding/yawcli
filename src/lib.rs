@@ -3,11 +3,13 @@ use clap::{App, Arg};
 use reqwest;
 use scraper;
 use serde::Deserialize;
+use std::cmp::min;
 use std::error::Error;
 
 type WeatherResult<T> = Result<T, Box<dyn Error>>;
 pub struct Config {
     celsius: bool,
+    hours: usize,
 }
 struct Location {
     latitude: String,
@@ -72,11 +74,22 @@ pub fn get_args() -> WeatherResult<Config> {
                 .long("celsius")
                 .help("Converts temperature to celsius.")
                 .takes_value(false),
-            //.conflicts_with("number_nonblank_lines") implemented my own errors to learn how they work
+        )
+        .arg(
+            Arg::with_name("hours")
+                .short("h")
+                .long("hours")
+                .help("How many hours to show in hourly forecase, max 24.")
+                .default_value("1")
+                .takes_value(true),
         )
         .get_matches();
+
+    let hours = matches.value_of_lossy("hours").unwrap();
+
     Ok(Config {
         celsius: matches.is_present("celsius"),
+        hours: hours.parse::<usize>()?,
     })
 }
 
@@ -165,34 +178,33 @@ fn print_hourly_forecast(
     config: Config,
 ) -> WeatherResult<()> {
     print_location(location);
+    println!("\nWeather for the next {} hour(s):", config.hours);
 
-    let mut temp = hourly_forecast.forecast.periods[0].temperature;
     let mut temp_unit = hourly_forecast.forecast.periods[0].unit.to_uppercase();
-    // Convert to celsius if needed
-    if config.celsius {
-        temp = (temp - 32.0) * 0.5556;
-        temp_unit = "C".to_string();
-    }
+    for period in 0..min(24, config.hours) {
+        let mut temp = hourly_forecast.forecast.periods[period].temperature;
 
-    // Print retrieved info
-    let time = DateTime::parse_from_rfc3339(&hourly_forecast.forecast.periods[0].time)?;
-    let hour = time.hour12();
-    println!(
-        "\nWeather {} {}{}:",
-        time.weekday(),
-        hour.1,
-        if hour.0 { "pm" } else { "am" }
-    );
-    println!("  Temp: {:.0}°{}", temp, temp_unit);
-    println!(
-        "  Conditions: {}",
-        hourly_forecast.forecast.periods[0].short_forecast
-    );
-    println!(
-        "  Wind: {} {}",
-        hourly_forecast.forecast.periods[0].wind_speed,
-        hourly_forecast.forecast.periods[0].wind_direction
-    );
+        // Convert to celsius if needed
+        if config.celsius {
+            temp = (temp - 32.0) * 0.5556;
+            temp_unit = "C".to_string();
+        }
+
+        // Print retrieved info
+        let time = DateTime::parse_from_rfc3339(&hourly_forecast.forecast.periods[period].time)?;
+        let hour = time.hour12();
+        println!(
+            "  {} {}{}:  [ Temp: {:.0}°{} ]  [ Conditions: {} ]  [ Wind: {} {} ]",
+            time.weekday(),
+            hour.1,
+            if hour.0 { "pm" } else { "am" },
+            temp,
+            temp_unit,
+            hourly_forecast.forecast.periods[period].short_forecast,
+            hourly_forecast.forecast.periods[period].wind_speed,
+            hourly_forecast.forecast.periods[period].wind_direction
+        );
+    }
 
     Ok(())
 }
