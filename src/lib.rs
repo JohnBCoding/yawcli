@@ -77,9 +77,8 @@ pub fn get_args() -> WeatherResult<Config> {
         )
         .arg(
             Arg::with_name("hours")
-                .short("h")
                 .long("hours")
-                .help("How many hours to show in hourly forecase, max 24.")
+                .help("How many hours to show in hourly forecast, max 24.")
                 .default_value("1")
                 .takes_value(true),
         )
