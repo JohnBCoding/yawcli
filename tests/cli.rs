@@ -29,11 +29,24 @@ fn can_connect_to_weather_api() -> TestResult<()> {
 // -------- CLI Tests ---------
 #[test]
 fn run_empty() -> TestResult<()> {
-    // Checks if 7 numbers are present, which should be the latitude/longitude, wind speed and current temp.
+    // Checks if a temp is displayed in fahrenheit
     Command::cargo_bin(PROGRAM)?
         .assert()
         .success()
-        .stdout(predicates::str::is_match(r"(\D*\d){8,}").unwrap());
+        .stdout(predicates::str::contains("Temp"))
+        .stdout(predicates::str::contains("°F"));
+    Ok(())
+}
+
+#[test]
+fn run_celsius() -> TestResult<()> {
+    // Checks if a temp is displayed in celsius
+    Command::cargo_bin(PROGRAM)?
+        .args(["-c"])
+        .assert()
+        .success()
+        .stdout(predicates::str::contains("Temp"))
+        .stdout(predicates::str::contains("°C"));
     Ok(())
 }
 // ----------------------------

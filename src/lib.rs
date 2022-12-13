@@ -63,7 +63,7 @@ pub fn run(config: Config) -> WeatherResult<()> {
 
 pub fn get_args() -> WeatherResult<Config> {
     let matches = App::new("yawcli")
-        .version("0.1.2")
+        .version("0.2")
         .author("John Bullard <johnbcooding@gmail.com>")
         .about("Uses your IP to get the local forecast, only works in USA.")
         .arg(
@@ -167,12 +167,11 @@ fn print_hourly_forecast(
     print_location(location);
 
     let mut temp = hourly_forecast.forecast.periods[0].temperature;
-    let mut temp_unit = hourly_forecast.forecast.periods[0].unit.to_lowercase();
-
+    let mut temp_unit = hourly_forecast.forecast.periods[0].unit.to_uppercase();
     // Convert to celsius if needed
     if config.celsius {
         temp = (temp - 32.0) * 0.5556;
-        temp_unit = "c".to_string();
+        temp_unit = "C".to_string();
     }
 
     // Print retrieved info
@@ -184,7 +183,7 @@ fn print_hourly_forecast(
         hour.1,
         if hour.0 { "pm" } else { "am" }
     );
-    println!("  Temp: {:.0}{}", temp, temp_unit);
+    println!("  Temp: {:.0}°{}", temp, temp_unit);
     println!(
         "  Conditions: {}",
         hourly_forecast.forecast.periods[0].short_forecast
