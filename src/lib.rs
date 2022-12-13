@@ -10,6 +10,7 @@ type WeatherResult<T> = Result<T, Box<dyn Error>>;
 pub struct Config {
     celsius: bool,
     hours: usize,
+    color: bool,
 }
 struct Location {
     latitude: String,
@@ -82,6 +83,12 @@ pub fn get_args() -> WeatherResult<Config> {
                 .default_value("1")
                 .takes_value(true),
         )
+        .arg(
+            Arg::with_name("color")
+                .long("color")
+                .help("Prints out the forecast in color")
+                .takes_value(false),
+        )
         .get_matches();
 
     let hours = matches.value_of_lossy("hours").unwrap();
@@ -89,6 +96,7 @@ pub fn get_args() -> WeatherResult<Config> {
     Ok(Config {
         celsius: matches.is_present("celsius"),
         hours: hours.parse::<usize>()?,
+        color: matches.is_present("color"),
     })
 }
 
