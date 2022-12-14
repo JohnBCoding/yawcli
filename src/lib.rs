@@ -1,10 +1,10 @@
-use chrono::{DateTime, Datelike, Timelike};
 use clap::{App, Arg};
 use reqwest;
 use scraper;
 use serde::Deserialize;
-use std::cmp::min;
 use std::error::Error;
+pub mod print;
+use print::*;
 
 type WeatherResult<T> = Result<T, Box<dyn Error>>;
 pub struct Config {
@@ -12,7 +12,7 @@ pub struct Config {
     hours: usize,
     color: bool,
 }
-struct Location {
+pub struct Location {
     latitude: String,
     longitude: String,
     country: String,
@@ -33,7 +33,7 @@ struct ForecastLinks {
     hourly: String,
 }
 #[derive(Deserialize, Debug)]
-struct HourlyForecast {
+pub struct HourlyForecast {
     #[serde(alias = "properties")]
     forecast: ForecastPeriods,
 }
@@ -71,7 +71,7 @@ pub fn run(config: Config) -> WeatherResult<()> {
 
 pub fn get_args() -> WeatherResult<Config> {
     let matches = App::new("yawcli")
-        .version("0.2")
+        .version("0.2.1")
         .author("John Bullard <johnbcooding@gmail.com>")
         .about("Uses your IP to get the local forecast, only works in USA.")
         .arg(
@@ -171,104 +171,4 @@ fn get_hourly_forecast(latitude: &String, longitude: &String) -> WeatherResult<H
     let hourly_forecast = response.json::<HourlyForecast>()?;
 
     Ok(hourly_forecast)
-}
-
-fn print_location(location: Location) {
-    println!(
-        "\n{}, {} | {} ({}, {})",
-        location.city,
-        location.region,
-        location.country,
-        location.latitude.split(".").next().unwrap_or(""),
-        location.longitude.split(".").next().unwrap_or("")
-    );
-}
-
-fn print_hourly_forecast(
-    location: Location,
-    hourly_forecast: HourlyForecast,
-    config: Config,
-) -> WeatherResult<()> {
-    print_location(location);
-    println!("\nWeather for the next {} hour(s):", config.hours);
-
-    let mut temp_unit = hourly_forecast.forecast.periods[0].unit.to_uppercase();
-    for period in 0..min(24, config.hours) {
-        let mut temp = hourly_forecast.forecast.periods[period].temperature;
-
-        // Convert to celsius if needed
-        if config.celsius {
-            temp = (temp - 32.0) * 0.5556;
-            temp_unit = "C".to_string();
-        }
-
-        // Print retrieved info
-        let time = DateTime::parse_from_rfc3339(&hourly_forecast.forecast.periods[period].time)?;
-        let hour = time.hour12();
-        println!(
-            "  {} {}{}:  [ Temp: {:.0}°{} ]  [ Conditions: {} ]  [ Wind: {} {} ]",
-            time.weekday(),
-            hour.1,
-            if hour.0 { "pm" } else { "am" },
-            temp,
-            temp_unit,
-            hourly_forecast.forecast.periods[period].short_forecast,
-            hourly_forecast.forecast.periods[period].wind_speed,
-            hourly_forecast.forecast.periods[period].wind_direction
-        );
-    }
-
-    Ok(())
-}
-
-/// Prints forecast with foreground and background colors
-fn print_hourly_forecast_colored(
-    location: Location,
-    hourly_forecast: HourlyForecast,
-    config: Config,
-) -> WeatherResult<()> {
-    print_location(location);
-    println!("\nWeather for the next {} hour(s):", config.hours);
-
-    let mut temp_unit = hourly_forecast.forecast.periods[0].unit.to_uppercase();
-    for period in 0..min(24, config.hours) {
-        let mut temp = hourly_forecast.forecast.periods[period].temperature;
-
-        // Convert to celsius if needed
-        if config.celsius {
-            temp = (temp - 32.0) * 0.5556;
-            temp_unit = "C".to_string();
-        }
-
-        // Print retrieved info, alternate background color every odd period
-        let time = DateTime::parse_from_rfc3339(&hourly_forecast.forecast.periods[period].time)?;
-        let hour = time.hour12();
-        if period % 2 == 0 {
-            println!(
-            "  {} {}{}:  \x1b[47;30m Temp: {:.0}°{} \x1b[0m\x1b[47;34m Conditions: {}\x1b[0m\x1b[47;35m Wind: {} {} \x1b[0m",
-            time.weekday(),
-            hour.1,
-            if hour.0 { "pm" } else { "am" },
-            temp,
-            temp_unit,
-            hourly_forecast.forecast.periods[period].short_forecast,
-            hourly_forecast.forecast.periods[period].wind_speed,
-            hourly_forecast.forecast.periods[period].wind_direction
-            );
-        } else {
-            println!(
-                "  {} {}{}:  \x1b[100;30m Temp: {:.0}°{} \x1b[0m\x1b[100;34m Conditions: {}\x1b[0m\x1b[100;35m Wind: {} {} \x1b[0m",
-                time.weekday(),
-                hour.1,
-                if hour.0 { "pm" } else { "am" },
-                temp,
-                temp_unit,
-                hourly_forecast.forecast.periods[period].short_forecast,
-                hourly_forecast.forecast.periods[period].wind_speed,
-                hourly_forecast.forecast.periods[period].wind_direction
-                );
-        }
-    }
-
-    Ok(())
 }
