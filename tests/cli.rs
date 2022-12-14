@@ -73,4 +73,16 @@ fn run_hours_celsius() -> TestResult<()> {
         .stdout(predicates::str::contains("°C").count(24));
     Ok(())
 }
+
+#[test]
+fn run_hours_color() -> TestResult<()> {
+    // Checks if 24 hours worth of data is shown with colors.
+    Command::cargo_bin(PROGRAM)?
+        .args(["--color", "--hours", "24"])
+        .assert()
+        .success()
+        .stdout(predicates::str::contains("\x1b[47;30m").count(12))
+        .stdout(predicates::str::contains("\x1b[100;30m").count(12));
+    Ok(())
+}
 // ----------------------------
