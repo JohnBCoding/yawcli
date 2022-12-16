@@ -2,6 +2,7 @@ use crate::{Config, HourlyForecast, Location, WeatherResult};
 use chrono::{DateTime, Datelike, Timelike};
 use std::cmp::min;
 
+/// Prints location information(city, region, country, latitude/longitude)
 fn print_location(location: Location) {
     println!(
         "\n{}, {} | {} ({}, {})",
@@ -13,14 +14,17 @@ fn print_location(location: Location) {
     );
 }
 
+/// Prints hourly forecast with no colors
 pub fn print_hourly_forecast(
     location: Location,
     hourly_forecast: HourlyForecast,
     config: Config,
 ) -> WeatherResult<()> {
+    // Printe header
     print_location(location);
     println!("\nWeather for the next {} hour(s):", config.hours);
 
+    // Print forecast for each hour given
     let mut temp_unit = hourly_forecast.forecast.periods[0].unit.to_uppercase();
     for period in 0..min(24, config.hours) {
         let mut temp = hourly_forecast.forecast.periods[period].temperature;
@@ -50,17 +54,21 @@ pub fn print_hourly_forecast(
     Ok(())
 }
 
-/// Prints forecast with foreground and background colors
+/// Prints hourly forecast with foreground and background colors
 pub fn print_hourly_forecast_colored(
     location: Location,
     hourly_forecast: HourlyForecast,
     config: Config,
 ) -> WeatherResult<()> {
+    // Enables color in windows cmd
     #[cfg(windows)]
     enable_virtual_terminal_processing();
+
+    // Print header
     print_location(location);
     println!("\nWeather for the next {} hour(s):", config.hours);
 
+    // Print forecast for each hour given
     let mut temp_unit = hourly_forecast.forecast.periods[0].unit.to_uppercase();
     for period in 0..min(24, config.hours) {
         let mut temp = hourly_forecast.forecast.periods[period].temperature;
@@ -104,11 +112,17 @@ pub fn print_hourly_forecast_colored(
     Ok(())
 }
 
+/// Enables color in windows cmd
+/// taken from https://stackoverflow.com/questions/63526130/why-do-ansi-escape-codes-sometimes-work-in-cmd
 #[cfg(windows)]
 fn enable_virtual_terminal_processing() {
     use winapi_util::console::Console;
 
     if let Ok(mut term) = Console::stdout() {
+        let _ = term.set_virtual_terminal_processing(true);
+    }
+
+    if let Ok(mut term) = Console::stderr() {
         let _ = term.set_virtual_terminal_processing(true);
     }
 }

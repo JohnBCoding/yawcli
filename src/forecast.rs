@@ -1,4 +1,4 @@
-use crate::WeatherResult;
+use crate::cli::WeatherResult;
 use serde::Deserialize;
 
 #[derive(Deserialize, Debug)]
