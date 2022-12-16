@@ -28,7 +28,7 @@ pub fn run(config: Config) -> WeatherResult<()> {
 
 pub fn get_args() -> WeatherResult<Config> {
     let matches = App::new("yawcli")
-        .version("0.2.1")
+        .version("0.2.2")
         .author("John Bullard <johnbcooding@gmail.com>")
         .about("Uses your IP to get the local forecast, only works in USA.")
         .arg(
