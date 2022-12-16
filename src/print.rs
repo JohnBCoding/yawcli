@@ -56,6 +56,8 @@ pub fn print_hourly_forecast_colored(
     hourly_forecast: HourlyForecast,
     config: Config,
 ) -> WeatherResult<()> {
+    #[cfg(windows)]
+    enable_virtual_terminal_processing();
     print_location(location);
     println!("\nWeather for the next {} hour(s):", config.hours);
 
@@ -100,4 +102,13 @@ pub fn print_hourly_forecast_colored(
     }
 
     Ok(())
+}
+
+#[cfg(windows)]
+fn enable_virtual_terminal_processing() {
+    use winapi_util::console::Console;
+
+    if let Ok(mut term) = Console::stdout() {
+        let _ = term.set_virtual_terminal_processing(true);
+    }
 }
