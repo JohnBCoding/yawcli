@@ -1,4 +1,4 @@
-use crate::{Config, HourlyForecast, Location, WeatherResult};
+use crate::{forecast::HourlyForecast, location::Location, Config, WeatherResult};
 use chrono::{DateTime, Datelike, Timelike};
 use std::cmp::min;
 

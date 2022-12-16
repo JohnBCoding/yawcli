@@ -5,7 +5,7 @@ CLI tool that uses your IP address to provide local weather data. Does not work 
 ## Usage
 
 ```
-yawcli 0.2.1
+yawcli 0.2.3
 Uses your IP to get the local forecast, only works in USA.
 
 USAGE:
